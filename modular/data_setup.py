@@ -1,5 +1,37 @@
 from torch.utils.data import Dataset
+from datasets import DatasetDict
 import torch
+
+
+def get_train_test_val_dataset(path):
+    ds= DatasetDict.from_csv(path)
+    ds =ds.remove_columns("Unnamed: 0")
+
+    train_val, test = ds.train_test_split(test_size=0.03, seed=42).values()
+    val_size = 0.17 / (1 - 0.03)  
+    train, val = train_val.train_test_split(test_size=val_size, seed=42).values()
+
+    ds_splits = DatasetDict({
+        'train': train,
+        'validation': val,
+        'test': test
+    })
+
+    return ds_splits
+
+
+
+def triplet_collate_fn(batch):
+    return {
+        'anchor_input_ids': torch.stack([item['anchor_input_ids'] for item in batch]),
+        'anchor_attention_mask': torch.stack([item['anchor_attention_mask'] for item in batch]),
+        'positive_input_ids': torch.stack([item['positive_input_ids'] for item in batch]),
+        'positive_attention_mask': torch.stack([item['positive_attention_mask'] for item in batch]),
+        'negative_input_ids': torch.stack([item['negative_input_ids'] for item in batch]),
+        'negative_attention_mask': torch.stack([item['negative_attention_mask'] for item in batch]),
+    }
+
+
 
 
 class TripletDataset(Dataset):
@@ -48,22 +80,3 @@ class TripletDataset(Dataset):
             "negative_attention_mask": triplet["negative"]["attention_mask"].squeeze(),
         }
 
-
-
-def triplet_collate_fn(batch):
-    return {
-        'anchor_input_ids': torch.stack([item['anchor_input_ids'] for item in batch]),
-        'anchor_attention_mask': torch.stack([item['anchor_attention_mask'] for item in batch]),
-        'positive_input_ids': torch.stack([item['positive_input_ids'] for item in batch]),
-        'positive_attention_mask': torch.stack([item['positive_attention_mask'] for item in batch]),
-        'negative_input_ids': torch.stack([item['negative_input_ids'] for item in batch]),
-        'negative_attention_mask': torch.stack([item['negative_attention_mask'] for item in batch]),
-    }
-
-
-
-#Mean Pooling - Take attention mask into account for correct averaging
-def mean_pooling(model_output, attention_mask):
-    token_embeddings = model_output[0] #First element of model_output contains all token embeddings
-    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)

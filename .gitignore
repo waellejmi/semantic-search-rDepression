@@ -1,2 +1,4 @@
-/data
+data
 modular/__pycache__
+models
+results

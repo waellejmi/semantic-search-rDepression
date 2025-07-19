@@ -6,7 +6,9 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModel
 from datasets import DatasetDict
-from modular.data_setup import TripletDataset, triplet_collate_fn, mean_pooling
+from modular.data_setup import TripletDataset, triplet_collate_fn
+from modular.engine import mean_pooling
+
 from accelerate import Accelerator
 from tqdm import tqdm
 import numpy as np
