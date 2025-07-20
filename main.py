@@ -3,13 +3,16 @@
 
 from modular.data_setup import triplet_collate_fn,TripletDataset,get_train_test_val_dataset
 from modular.engine import calculate_triplet_accuracy,validate_model,process_triplet_batch,clear_cuda_cache
+from modular.utils import set_up_info_loggger
 from transformers import AutoTokenizer, AutoModel, get_scheduler
 
 import torch
 from torch.utils.data import DataLoader
 from accelerate import Accelerator
 from tqdm import tqdm
-import logging
+
+logger = set_up_info_loggger()
+
 
 #g Get Data
 ds_splits = get_train_test_val_dataset("data/r_depression_posts.csv")
@@ -20,7 +23,7 @@ tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 model = AutoModel.from_pretrained(checkpoint)
 
 # MEMORY OPTIMIZATION 1: Reduce batch size significantly
-BATCH_SIZE = 8  # Reduced from 32
+BATCH_SIZE = 8  
 GRADIENT_ACCUMULATION_STEPS = 4  # To maintain effective batch size of 32
 
 train_dataset = TripletDataset(ds_splits["train"], tokenizer)
@@ -63,8 +66,6 @@ lr_scheduler = get_scheduler(
     num_training_steps=num_training_steps,
 )
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 model.train()
 global_step = 0

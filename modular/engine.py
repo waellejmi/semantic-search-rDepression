@@ -35,7 +35,7 @@ def process_triplet_batch(model, batch):
     ], dim=0)
     
     # Single forward pass for all triplets
-    with torch.cuda.amp.autocast('cuda'):  # Mixed precision
+    with torch.amp.autocast(device_type='cuda'):
         outputs = model(input_ids=all_input_ids, attention_mask=all_attention_mask)
         embeddings = mean_pooling(outputs, all_attention_mask)
         embeddings = F.normalize(embeddings, p=2, dim=1)
@@ -82,7 +82,7 @@ def validate_model(model, val_loader, triplet_loss, accelerator):
 
 
 # MEMORY OPTIMIZATION 3: we use it for mixed precision but we got Accelarte from HF already doing it 
-scaler = torch.cuda.amp.GradScaler('cuda')
+scaler = torch.amp.GradScaler('cuda')
 
 
 # MEMORY OPTIMIZATION 4 : Clear GPU VRAM cache + force garbage colletion   ( use it every few steps ) 
