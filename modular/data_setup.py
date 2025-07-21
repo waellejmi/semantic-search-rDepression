@@ -6,7 +6,6 @@ import random
 
 def get_train_test_val_dataset(path):
     ds= DatasetDict.from_csv(path)
-    ds =ds.remove_columns("Unnamed: 0")
 
     train_val, test = ds.train_test_split(test_size=0.03, seed=42).values() #3% test dataset
     val_size = 0.17 / (1 - 0.03)  # ensure 17% of total dataset

@@ -1,11 +1,14 @@
 import matplotlib.pyplot as plt
 import logging
+from accelerate import Accelerator
+from transformers import AutoTokenizer, AutoModel
 
 
 
-def set_up_info_loggger():
+
+def set_up_info_loggger(name=__name__):
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(name)
     return logger
 
 def visualize_results(results,logger, save_path=None):
