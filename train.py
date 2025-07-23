@@ -136,13 +136,18 @@ for epoch in range(num_epochs):
             val_loss, val_accuracy = validate_model(model, val_loader, triplet_loss, accelerator)
             logger.info(f"Validation - Loss: {val_loss:.4f}, Accuracy: {val_accuracy:.4f}")
             
-            # Save best model
+            # Save best model checkpoint
             if val_accuracy > best_val_accuracy:
                 best_val_accuracy = val_accuracy
                 if accelerator.is_main_process:
                     accelerator.save_state(f"models/best_model_checkpoint")
                     logger.info(f"New best model saved with accuracy: {val_accuracy:.4f}")
-            
+                    #  Save the model for inference
+                    unwrapped_model = accelerator.unwrap_model(model)
+                    save_path = "models/all-MiniLM-L6-v2-finetuned-rDepression"
+                    unwrapped_model.save_pretrained(save_path)
+                    tokenizer.save_pretrained(save_path)
+                    logger.info(f"Model and tokenizer saved to {save_path}")
             model.train()
     
     # End of epoch validation
@@ -157,10 +162,3 @@ for epoch in range(num_epochs):
     logger.info(f"Val Loss: {val_loss:.4f}, Val Accuracy: {val_accuracy:.4f}")
     
 
-#  Save the model 
-if accelerator.is_main_process:
-    unwrapped_model = accelerator.unwrap_model(model)
-    save_path = "models/all-MiniLM-L6-v2-finetuned-rDepression"
-    unwrapped_model.save_pretrained(save_path)
-    tokenizer.save_pretrained(save_path)
-    logger.info(f"Model and tokenizer saved to {save_path}")

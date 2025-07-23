@@ -1,11 +1,8 @@
-# query.py
-
 import torch
 import torch.nn.functional as F
 import numpy as np
 from transformers import AutoTokenizer, AutoModel
 from datasets import Dataset
-from accelerate import Accelerator
 import argparse
 
 from modular.engine import mean_pooling
@@ -17,7 +14,7 @@ class PostSimilarityFinder:
     def __init__(self, model_path: str, dataset_dir: str, faiss_index_path: str):
         """
         Args:
-            model_path: Trained model checkpoint directory
+            model_path: Directory with unwrapped fine-tuned model (HuggingFace format)
             dataset_dir: Path to dataset with precomputed embeddings
             faiss_index_path: Path to saved FAISS index 
         """
@@ -28,15 +25,11 @@ class PostSimilarityFinder:
         self.load_indexed_dataset(dataset_dir, faiss_index_path)
 
     def load_model(self, model_path: str):
-        logger.info(f"Loading model from {model_path}")
-        accelerator = Accelerator()
+        logger.info(f"Loading model and tokenizer from {model_path}")
 
-        checkpoint = 'sentence-transformers/all-MiniLM-L6-v2'
-        self.tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-        self.model = AutoModel.from_pretrained(checkpoint)
-
-        accelerator.load_state(model_path)
-        self.model = accelerator.prepare(self.model)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = AutoModel.from_pretrained(model_path)
+        self.model.to(self.device)
         self.model.eval()
 
         logger.info("Model loaded successfully")
@@ -54,7 +47,7 @@ class PostSimilarityFinder:
             truncation=True,
             max_length=512,
             return_tensors='pt'
-        ).to(self.model.device)
+        ).to(self.device)
 
         with torch.no_grad():
             output = self.model(**encoded)
@@ -68,11 +61,9 @@ class PostSimilarityFinder:
         query_embedding = self.get_query_embedding(query_text)
         scores, examples = self.dataset.get_nearest_examples("embeddings", query_embedding, k=top_k)
 
-        # Zip, sort by score DESC
         zipped = list(zip(scores, examples["text"], examples.get("url", [""] * top_k)))
         zipped.sort(key=lambda x: x[0], reverse=True)
 
-        # Build ranked results
         results = []
         for i, (score, text, url) in enumerate(zipped):
             results.append({
@@ -101,7 +92,6 @@ class PostSimilarityFinder:
             print(f"URL: {result.get('url', '')}")
             print("-" * 60)
 
-
     def interactive_mode(self, top_k=3):
         print("\nInteractive Post Similarity Finder")
         print("=" * 50)
@@ -126,10 +116,9 @@ class PostSimilarityFinder:
                 print(f"Error: {e}")
 
 
-
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_path", type=str, default="models/best_model_checkpoint")
+    parser.add_argument("--model_path", type=str, default="models/all-MiniLM-L6-v2-finetuned-on-rDepression")
     parser.add_argument("--dataset_dir", type=str, default="data/with_embeddings")
     parser.add_argument("--faiss_index_path", type=str, default="data/with_embeddings/faiss.index")
     parser.add_argument("--query", type=str, default=None)
