@@ -9,6 +9,8 @@ The idea is simple: you type out what you're feeling, whether it's to vent or to
 
 Sometimes, just seeing that someone else has felt the same way can make a difference. The model returns the top 3 most semantically similar posts, along with their original Reddit URLs. If the post still exists, you can visit it and read the discussions and comments of others who've been through something similar.
 
+
+### [Live Demo(HF Spaces)](https://huggingface.co/spaces/waellejmi/Semantic-Search-on-rDepression)
 ## Example Output
 
 ### **Query:**
@@ -98,8 +100,6 @@ This project was a deep dive into building a semantic search model with Hugging 
 
 ## Future Improvements / TODO
 
-- Push the full model to HuggingFace for inference use.
-- Build a live demo with Gradio
 - Export the model to ONNX and apply quantization for optimization
 - Implement content filtering and safety measures for edge cases where retrieved posts might contain particularly concerning content (self-harm references, crisis situations)
 
